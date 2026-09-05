@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Playwright outputs
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+test-results-*/
+
+# env secrets - keep .env.example, ignore real .env
+.env
+.env.local
+
+# build / cache
+dist/
+.cache/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
