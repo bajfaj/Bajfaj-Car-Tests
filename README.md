@@ -33,11 +33,13 @@ npx playwright test --reporter=list
 ```
 
 ### Structure
+```
 config/env.ts - env loader
 tests/api/cars.api.spec.ts - main suite
 data/carData.ts - factories
 fixtures/fixtures.ts - fixtures
 utils/cleanup.ts - auto delete created cars
+```
 
 ### Related Repo
 App: https://github.com/bajfaj/bajfaj-car-management
