@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env ENV=test npx playwright test",
+    "test:api": "cross-env ENV=test npx playwright test --project=api",
+    "test:api:dev": "cross-env ENV=development npx playwright test --project=api",
+    "test:api:test": "cross-env ENV=test npx playwright test --project=api",
+    "test:api:prod": "cross-env ENV=production npx playwright test --project=api",
+    "test:ui": "cross-env ENV=test npx playwright test --project=ui",
+    "test:ui:dev": "cross-env ENV=development npx playwright test --project=ui",
+    "test:headed": "cross-env ENV=test npx playwright test --project=ui --headed",
+    "report": "npx playwright show-report",
+    "codegen": "npx playwright codegen"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +22,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.4.1",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2"
   }
 }
