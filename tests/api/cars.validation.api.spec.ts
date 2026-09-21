@@ -1,23 +1,18 @@
 import { test, expect } from '../fixtures/fixtures';
 import { makeCarPayload } from '../data/carData';
-import { cleanupTestCars } from '../utils/cleanup';
 
 test.describe('Cars API - Validation', () => {
-  test.beforeAll(async ({ apiRequest }) => {
-    await cleanupTestCars(apiRequest);
-  });
 
   test('VAL-01 registration format TOOLONG123 -> 400', async ({ apiRequest }) => {
     const payload = { ...makeCarPayload(), registration: 'TOOLONG123' };
     const res = await apiRequest.post('/api/cars', { data: payload });
-    // Now API checks: max 8 chars (UK plate AB12 CDE)
     expect([400,422]).toContain(res.status());
   });
 
   test('VAL-02 registration empty -> 400', async ({ apiRequest }) => {
     const payload = { ...makeCarPayload(), registration: '' };
     const res = await apiRequest.post('/api/cars', { data: payload });
-    expect([400,422], `BUG-001: API accepts empty registration, got ${res.status()}`).toContain(res.status());
+    expect([400,422]).toContain(res.status());
   });
 
   test('VAL-03 make missing -> 400', async ({ apiRequest }) => {
@@ -57,55 +52,42 @@ test.describe('Cars API - Validation', () => {
     expect([400,422]).toContain(res.status());
   });
 
-  test('VAL-09 sell without saleAmount -> 400', async ({ apiRequest }) => {
+  test('VAL-09 sell without saleAmount -> 400', async ({ apiRequest, trackId }) => {
     const create = await apiRequest.post('/api/cars', { data: makeCarPayload() });
     const { id } = await create.json();
-    try {
-      const res = await apiRequest.put(`/api/cars/${id}`, { data: { status: 'Sold' } });
-      expect([400,422]).toContain(res.status());
-    } finally {
-      await apiRequest.delete(`/api/cars/${id}/permanent`);
-    }
+    trackId(id);
+    const res = await apiRequest.put(`/api/cars/${id}`, { data: { status: 'Sold' } });
+    expect([400,422]).toContain(res.status());
   });
 
-  test('VAL-10 saleYear < purchaseYear -> 400', async ({ apiRequest }) => {
-    const payload = { ...makeCarPayload(), purchaseYear: 2023 };
-    const create = await apiRequest.post('/api/cars', { data: payload });
+  test('VAL-10 saleYear < purchaseYear -> 400', async ({ apiRequest, trackId }) => {
+    const create = await apiRequest.post('/api/cars', { data: { ...makeCarPayload(), purchaseYear: 2023 } });
     const { id } = await create.json();
-    try {
-      const res = await apiRequest.put(`/api/cars/${id}`, { 
-        data: { status: 'Sold', saleAmount: 2000, saleYear: 2020, platformSoldOn: 'EBAY', advertisedPlatforms: 'EBAY' } 
-      });
-      expect([400,422]).toContain(res.status());
-    } finally {
-      await apiRequest.delete(`/api/cars/${id}/permanent`);
-    }
+    trackId(id);
+    const res = await apiRequest.put(`/api/cars/${id}`, { 
+      data: { status: 'Sold', saleAmount: 2000, saleYear: 2020, platformSoldOn: 'EBAY', advertisedPlatforms: 'EBAY' } 
+    });
+    expect([400,422]).toContain(res.status());
   });
 
-  test('VAL-11 sell without platformSoldOn -> 400', async ({ apiRequest }) => {
+  test('VAL-11 sell without platformSoldOn -> 400', async ({ apiRequest, trackId }) => {
     const create = await apiRequest.post('/api/cars', { data: makeCarPayload() });
     const { id } = await create.json();
-    try {
-      const res = await apiRequest.put(`/api/cars/${id}`, { 
-        data: { status: 'Sold', saleAmount: 2000, saleYear: 2024, advertisedPlatforms: 'EBAY' } 
-      });
-      expect([400,422]).toContain(res.status());
-    } finally {
-      await apiRequest.delete(`/api/cars/${id}/permanent`);
-    }
+    trackId(id);
+    const res = await apiRequest.put(`/api/cars/${id}`, { 
+      data: { status: 'Sold', saleAmount: 2000, saleYear: 2024, advertisedPlatforms: 'EBAY' } 
+    });
+    expect([400,422]).toContain(res.status());
   });
 
-  test('VAL-12 sell without advertisedPlatforms -> 400', async ({ apiRequest }) => {
+  test('VAL-12 sell without advertisedPlatforms -> 400', async ({ apiRequest, trackId }) => {
     const create = await apiRequest.post('/api/cars', { data: makeCarPayload() });
     const { id } = await create.json();
-    try {
-      const res = await apiRequest.put(`/api/cars/${id}`, { 
-        data: { status: 'Sold', saleAmount: 2000, saleYear: 2024, platformSoldOn: 'EBAY' } 
-      });
-      expect([400,422]).toContain(res.status());
-    } finally {
-      await apiRequest.delete(`/api/cars/${id}/permanent`);
-    }
+    trackId(id);
+    const res = await apiRequest.put(`/api/cars/${id}`, { 
+      data: { status: 'Sold', saleAmount: 2000, saleYear: 2024, platformSoldOn: 'EBAY' } 
+    });
+    expect([400,422]).toContain(res.status());
   });
 
   test('VAL-13 model missing -> 400', async ({ apiRequest }) => {
