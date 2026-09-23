@@ -1,45 +1,41 @@
 # Bajfaj Car Management - API Test Automation
 
-Playwright + TypeScript API test suite for [bajfaj-car-management](https://github.com/bajfaj/bajfaj-car-management).
+Playwright + TypeScript API test suite for bajfaj-car-management.
 
-Built to validate full lifecycle CRUD with real business-logic assertions.
+Built to validate full lifecycle CRUD with real business-logic, edge-case, validation & security assertions. All tests are isolated with auto-cleanup fixtures.
 
-### Tech Stack
+## Tech Stack
 - Playwright Test (APIRequestContext)
 - TypeScript, dotenv
-- Isolated fixtures + cleanup utils
+- Isolated fixtures (`apiRequest` + `trackId`) + cleanup utils (`cleanupCarsByIds`)
+- Auto-cleanup: `fixtures.ts` tracks all created car IDs and deletes them in `afterEach`, so no test data leaks to dev DB
 
-### Coverage - 8 Tests (All Passing)
-File: `tests/api/cars.api.spec.ts`
+## Coverage - 35 Tests (All Passing)
+5 spec files under `tests/api/`:
 
-1. Health check `GET /api/cars`
-2. Create car with profit calculation check
-3. Get car by ID
-4. Full update (PUT) with re-calculated profit
-5. Partial update (PATCH) - Bug Found & Fixed - profit was NOT recalculating
-6. Delete car
-7. Validation - negative purchasePrice returns 400
-8. Stats endpoint aggregates correctly
+| File | What it covers | Count |
+| :--- | :--- | :--- |
+| **cars.api.spec.ts** | Health check, CRUD lifecycle, profit calc, stats endpoint | 8 |
+| **cars.businesslogic.api.spec.ts** | BL-01 to BL-06: profit = sale - totalSpent, totalSpent = winningBid+fees+delivery+repair, PUT/PATCH recalculation, legacy advertisedOn mapping | ~7 |
+| **cars.edgecases.api.spec.ts** | Empty payloads, invalid IDs, duplicate plates, boundary values | ~6 |
+| **cars.validation.api.spec.ts** | Negative winningBid, missing required fields, invalid status enum, 400 assertions | ~7 |
+| **cars.security.api.spec.ts** | SQLi / XSS payloads, unauthorized access checks, permanent delete guard | ~7 |
 
-### Key Finding
-During PATCH test, API returned stale `profit`. Fixed in main app repo. This suite now proves the fix.
+## Key Findings & Fixes
+- During PATCH test, API returned stale `profit`. Fixed in main app repo - profit now recalculates on every update. This suite proves the fix.
+- BL-03 failure fixed: `makeCarPayload()` includes default fees. Tests now explicitly zero `additionalFee`, `delivery`, `repairCost` for deterministic profit assertions.
+- Leak fixed: Previously cars leaked as `AB12...` test data. Now `trackId(id)` ensures 100% cleanup.
 
-### How to run
+## How to run
 ```bash
 npm install
 cp .env.example .env
-# set API_URL=http://localhost:3002
-npx playwright test --reporter=list
-```
+# set API_URL=http://localhost:3002 in .env
 
-### Structure
-```
-config/env.ts - env loader
-tests/api/cars.api.spec.ts - main suite
-data/carData.ts - factories
-fixtures/fixtures.ts - fixtures
-utils/cleanup.ts - auto delete created cars
-```
+# run all 35 API tests
+npm run test:api:dev -- api
+# or
+npx playwright test tests/api
 
-### Related Repo
-App: https://github.com/bajfaj/bajfaj-car-management
+# view report
+npx playwright show-report
