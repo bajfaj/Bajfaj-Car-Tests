@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/fixtures';
+import { test, expect } from '../fixtures';
 import { makeCarPayload } from '../data/carData';
 
 test.describe('Cars API - Business Logic', () => {
