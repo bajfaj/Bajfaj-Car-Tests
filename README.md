@@ -1,41 +1,63 @@
-# Bajfaj Car Management - API Test Automation
+# Bajfaj Car Management - Test Automation
+Playwright + TypeScript E2E test suite for bajfaj-car-management.
 
-Playwright + TypeScript API test suite for bajfaj-car-management.
+Covers full stack: API lifecycle + Business Logic + Validation + Security + UI Login. All tests isolated with auto-cleanup fixtures - no data leaks to dev/prod DB.
 
-Built to validate full lifecycle CRUD with real business-logic, edge-case, validation & security assertions. All tests are isolated with auto-cleanup fixtures.
+![Architecture](docs/architecture.png)
 
-## Tech Stack
-- Playwright Test (APIRequestContext)
-- TypeScript, dotenv
-- Isolated fixtures (`apiRequest` + `trackId`) + cleanup utils (`cleanupCarsByIds`)
-- Auto-cleanup: `fixtures.ts` tracks all created car IDs and deletes them in `afterEach`, so no test data leaks to dev DB
+### Tech Stack
+- Playwright Test (APIRequestContext + UI)
+- TypeScript, dotenv, Page Object Model
+- Isolated fixtures (`apiRequest` + `trackId`) + `cleanupCarsByIds`
+- Auto-cleanup: tracks all created car IDs and deletes in `afterEach`
 
-## Coverage - 35 Tests (All Passing)
-5 spec files under `tests/api/`:
+### Coverage - 64 Tests (All Passing) - Dev Env
+
+**API - 56 tests** - `tests/api/`:
 
 | File | What it covers | Count |
-| :--- | :--- | :--- |
-| **cars.api.spec.ts** | Health check, CRUD lifecycle, profit calc, stats endpoint | 8 |
-| **cars.businesslogic.api.spec.ts** | BL-01 to BL-06: profit = sale - totalSpent, totalSpent = winningBid+fees+delivery+repair, PUT/PATCH recalculation, legacy advertisedOn mapping | 5 |
-| **cars.edgecases.api.spec.ts** | Empty payloads, invalid IDs, duplicate plates, boundary values | 5 |
-| **cars.validation.api.spec.ts** | Negative winningBid, missing required fields, invalid status enum, 400 assertions | 14 |
-| **cars.security.api.spec.ts** | SQLi / XSS payloads, unauthorized access checks, permanent delete guard | 3 |
+|---|---|---|
+| `cars.api.spec.ts` | Health, CRUD lifecycle, profit calc, stats | 8 |
+| `cars.businesslogic.api.spec.ts` | BL-01 to BL-06: profit calc, totalSpent, PUT/PATCH recalc | 6 |
+| `cars.edgecases.api.spec.ts` | Empty payloads, invalid IDs, duplicate plates, boundaries | 5 |
+| `cars.validation.api.spec.ts` | VAL-01 to VAL-14: negative fields, missing required, enum | 14 |
+| `cars.security.api.spec.ts` | SQLi / XSS, auth guards, delete guard | 3 |
+| `auth.api.spec.ts` + `auth.validation.api.spec.ts` | AUTH-01 to AUTH-19: login, trim, lowercase, logout blacklist | 20 |
 
-## Key Findings & Fixes
-- During PATCH test, API returned stale `profit`. Fixed in main app repo - profit now recalculates on every update. This suite proves the fix.
-- BL-03 failure fixed: `makeCarPayload()` includes default fees. Tests now explicitly zero `additionalFee`, `delivery`, `repairCost` for deterministic profit assertions.
-- Leak fixed: Previously cars leaked as `AB12...` test data. Now `trackId(id)` ensures 100% cleanup.
+**UI - 8 tests** - `tests/ui/`:
 
-## How to run
+| File | What it covers |
+|---|---|
+| `login.ui.spec.ts` | LOGIN-01 to LOGIN-08: valid/invalid login, validation, logout clears session, Enter key submit |
+
+POM: `tests/pages/login.page.ts` - centralizes selectors + actions
+
+### Key Fixes Proven By This Suite
+1. **PATCH stale profit** - Fixed in backend, profit now recalculates on every update
+2. **BL-03 profit calc** - `makeCarPayload()` includes default fees, tests zero additionalFee/delivery/repair for determinism
+3. **Auth email normalization** - `server/src/routes/auth.js` now `trim().toLowerCase()` before Zod validation - fixes AUTH-15/16/19
+4. **Data leak** - `trackId(id)` ensures 100% cleanup, no more AB12... test plates left behind
+5. **JWT protection** - All car routes now require Bearer token
+
+### How to run
+
 ```bash
 npm install
 cp .env.example .env
-# set API_URL=http://localhost:3002 in .env
+# set in .env:
+# API_URL=http://localhost:3002
+# UI_URL=http://localhost:3000
+# TEST_EMAIL=admin@bajfaj.com
+# TEST_PASSWORD=...
 
-# run all 35 API tests
-npm run test:api:dev -- api
-# or
-npx playwright test tests/api
+# Run all 64 against dev
+npm run test
 
-# view report
+# API only
+npm run test:api:dev
+
+# UI only
+npm run test:ui:dev
+
+# Report
 npx playwright show-report
