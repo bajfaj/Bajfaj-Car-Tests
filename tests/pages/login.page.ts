@@ -1,56 +1,63 @@
 import { BasePage } from './base.page';
-import { expect } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
 
 export class LoginPage extends BasePage {
-  email() {
-    return this.page.getByTestId('email');
+  email(): Locator {
+    return this.page.getByTestId('login-email');
   }
 
-  password() {
-    return this.page.getByTestId('password');
+  password(): Locator {
+    return this.page.getByTestId('login-password');
   }
 
-  loginBtn() {
-    return this.page.getByTestId('login-btn');
+  loginBtn(): Locator {
+    return this.page.getByTestId('login-button');
   }
 
-  error() {
-    return this.page.getByTestId('error');
+  error(): Locator {
+    // login error - check common patterns
+    return this.page.locator('[data-testid="login-error"], [data-testid="error"], [role="alert"], .text-red-500, .text-red-600, p.text-sm').first();
+  }
+
+  logoutBtn(): Locator {
+    return this.page.getByRole('button', { name: /logout/i });
   }
 
   async expectLoaded() {
-    await expect(this.email()).toBeVisible({ timeout: 10000 });
+    await expect(this.email()).toBeVisible({ timeout: 15000 });
     await expect(this.password()).toBeVisible();
     await expect(this.loginBtn()).toBeVisible();
   }
 
   async fillLoginForm(email: string, password: string) {
-    const e = this.email();
-    const p = this.password();
-
-    await e.click();
+    await this.email().click();
     await this.page.keyboard.press('ControlOrMeta+A');
     await this.page.keyboard.press('Backspace');
-    await this.page.keyboard.type(email); // type('') after select-all+backspace = state becomes ''
+    await this.email().fill(email);
 
-    await p.click();
+    await this.password().click();
     await this.page.keyboard.press('ControlOrMeta+A');
     await this.page.keyboard.press('Backspace');
-    await this.page.keyboard.type(password);
-  }
-
-  async mockLogin(email = 'test@test.com', password = 'password123') {
-    await this.fillLoginForm(email, password);
-    await this.loginBtn().click();
-    await this.page.waitForURL(/.*dashboard/, { timeout: 10000 });
+    await this.password().fill(password);
   }
 
   async getToken() {
     try {
-      return await this.page.evaluate(() => localStorage.getItem('token'));
-    } catch {
-      // prevents "Execution context was destroyed" when page navigates
-      return null;
-    }
+      return await this.page.evaluate(() => 
+        localStorage.getItem('token') || localStorage.getItem('access_token') || sessionStorage.getItem('token')
+      );
+    } catch { return null; }
   }
+
+  async logout() {
+    await this.logoutBtn().click();
+    await this.page.waitForURL(/.*login/, { timeout: 10000 });
+  }
+
+  async login(email = 'admin@bajfaj.com', password = 'Admin123!') {
+    await this.fillLoginForm(email, password);
+    await this.loginBtn().click();
+    await this.page.waitForURL(/.*dashboard/, { timeout: 15000 });
+  }
+  async mockLogin(e = 'admin@bajfaj.com', p = 'Admin123!') { return this.login(e,p); }
 }

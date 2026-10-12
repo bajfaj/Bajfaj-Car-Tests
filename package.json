@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env ENV=test npx playwright test",
+    "test": "cross-env ENV=dev npx playwright test",
     "test:api": "cross-env ENV=test npx playwright test --project=api",
     "test:api:dev": "cross-env ENV=development npx playwright test --project=api",
     "test:api:test": "cross-env ENV=test npx playwright test --project=api",
@@ -12,6 +12,8 @@
     "test:ui": "cross-env ENV=test npx playwright test --project=ui",
     "test:ui:dev": "cross-env ENV=development npx playwright test --project=ui",
     "test:headed": "cross-env ENV=test npx playwright test --project=ui --headed",
+    "test:dev:headed": "cross-env ENV=dev npx playwright test --project=ui --headed",
+    "test:prod:headed": "cross-env ENV=prod npx playwright test --project=ui --headed",
     "report": "npx playwright show-report",
     "codegen": "npx playwright codegen"
   },
